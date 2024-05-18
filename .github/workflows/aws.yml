@@ -1,4 +1,4 @@
-name: Build and Push Node.js Image to AWS ECR and Deploy to ECS
+name: Build and Deploy to AWS ECS
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build, Push to ECR, and Deploy to ECS
+    name: Build and Deploy to ECS
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
@@ -18,7 +19,7 @@ jobs:
         node-version: '20'
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
+      uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -29,7 +30,6 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, Tag, and Push the Image to Amazon ECR
-      id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: nodejs
@@ -39,22 +39,20 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./app/Dockerfile .
         echo "Pushing Docker image..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-    - name: Download task definition
+    - name: Download existing task definition
       run: |
-        aws ecs describe-task-definition --task-definition hello-world-task \
-          --query taskDefinition > task-definition.json
+        aws ecs describe-task-definition --task-definition hello-world-task > task-definition.json
 
-    - name: Fill in the new image ID in the Amazon ECS task definition
+    - name: Fill in the new image ID in the ECS task definition
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition.json
         container-name: hello-world
-        image: ${{ steps.build-image.outputs.image }}
+        image: ${{ steps.login-ecr.outputs.registry }}/nodejs:latest
 
-    - name: Deploy Amazon ECS task definition
+    - name: Deploy ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
