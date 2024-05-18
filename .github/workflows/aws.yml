@@ -50,7 +50,7 @@ jobs:
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          task-definition: ${{ steps.cgafrica-new-backend-task.outputs.task-definition }}
           service: hello-world-service
           cluster: hello-world-cluster
           wait-for-service-stability: true             
