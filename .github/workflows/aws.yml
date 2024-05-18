@@ -46,3 +46,11 @@ jobs:
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "Pushing Docker image..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+           
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: hello-world-service
+          cluster: hello-world-cluster
+          wait-for-service-stability: true             
