@@ -3,7 +3,7 @@
   "containerDefinitions": [
     {
       "name": "hello-world-container",
-      "image": local,
+      "image": 211125390825.dkr.ecr.us-west-2.amazonaws.com/nodejs,
       "cpu": 256,
       "memory": 512,
       "essential": true,
