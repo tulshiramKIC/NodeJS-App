@@ -3,7 +3,7 @@
   "containerDefinitions": [
     {
       "name": "hello-world-container",
-      "image": 211125390825.dkr.ecr.us-west-2.amazonaws.com/nodejs,
+      "image": "211125390825.dkr.ecr.us-west-2.amazonaws.com/nodejs",
       "cpu": 256,
       "memory": 512,
       "essential": true,
@@ -12,22 +12,14 @@
           "containerPort": 3000,
           "protocol": "tcp"
         }
-      ],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/hello-world-task",
-          "awslogs-region": "us-west-2",
-          "awslogs-stream-prefix": "ecs"
-        }
-      }
+      ]
     }
   ],
   "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
-  "requiresCompatibilities": ["FARGATE"],
   "networkMode": "awsvpc",
   "cpu": "256",
   "memory": "512",
+  "requiresCompatibilities": ["FARGATE"],
   "tags": [
     {
       "key": "Name",
