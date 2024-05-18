@@ -40,10 +40,10 @@ jobs:
         echo "Pushing Docker image..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-    - name: Download existing task definition
+    - name: Download task definition
       run: |
-        aws ecs describe-task-definition --task-definition hello-world-task > task-definition.json
-
+        aws ecs describe-task-definition --task-definition hello-world-task > ecs/task-definition.json
+  
     - name: Fill in the new image ID in the ECS task definition
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
