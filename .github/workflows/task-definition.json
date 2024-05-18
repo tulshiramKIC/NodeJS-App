@@ -1,18 +1,37 @@
 {
-  "family": "my-task-definition",
+  "family": "hello-world-task",
   "containerDefinitions": [
     {
-      "name": "my-container",
-      "image": "your-image-uri",
+      "name": "hello-world-container",
+      "image": local,
       "cpu": 256,
       "memory": 512,
       "essential": true,
       "portMappings": [
         {
-          "containerPort": 80,
+          "containerPort": 3000,
           "protocol": "tcp"
         }
-      ]
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/hello-world-task",
+          "awslogs-region": "us-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "tags": [
+    {
+      "key": "Name",
+      "value": "HelloWorldTask"
     }
   ]
 }
