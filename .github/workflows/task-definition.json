@@ -1,0 +1,18 @@
+{
+  "family": "my-task-definition",
+  "containerDefinitions": [
+    {
+      "name": "my-container",
+      "image": "your-image-uri",
+      "cpu": 256,
+      "memory": 512,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  ]
+}
