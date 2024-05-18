@@ -64,4 +64,8 @@ resource "aws_ecs_service" "main" {
     subnets         = [aws_subnet.public.id]
     security_groups = [aws_security_group.allow_http.id]
   }
+
+resource "aws_ecr_repository" "node-ecs" {
+  name = "node-ecs"
+  }
 }
