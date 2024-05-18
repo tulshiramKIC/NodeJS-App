@@ -1,64 +1,63 @@
-name: Build and Push Node.js Image to AWS ECR
+name: Build and Push Node.js Image to AWS ECR and Deploy to ECS
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-push:
-    name: Build and Push to ECR
+  build-and-deploy:
+    name: Build, Push to ECR, and Deploy to ECS
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2  
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Debug environment variables
-        run: |
-          echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}"
-          echo "ECR_REPOSITORY=node-ecs"
-          echo "IMAGE_TAG=latest"
+    - name: Build, Tag, and Push the Image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: node-ecs
+        IMAGE_TAG: latest
+      run: |
+        echo "Building Docker image..."
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./app/Dockerfile .
+        echo "Pushing Docker image..."
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Build, Tag, and Push the Image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: node-ecs  
-          IMAGE_TAG: latest  
-        run: |
-          echo "Building Docker image..."
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./app/Dockerfile .
-          echo "Tagging Docker image with the same tag..."
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest 
-          echo "Pushing Docker image..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-           
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-         task-definition: task-definition.json
-         container-name: hello-world
-         image: ${{ steps.build-image.outputs.image }}
-         
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-         task-definition: ${{ steps.task-def.outputs.task-definition }}
-         service: hello-world-service
-         cluster: hello-world-cluster
-         wait-for-service-stability: true             
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition --task-definition hello-world-task \
+          --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: hello-world
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: hello-world-service
+        cluster: hello-world-cluster
+        wait-for-service-stability: true
