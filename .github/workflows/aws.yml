@@ -42,7 +42,7 @@ jobs:
 
     - name: Download task definition
       run: |
-        aws ecs describe-task-definition --task-definition hello-world-task > ecs/task-definition.json
+        aws ecs describe-task-definition --task-definition hello-world-task > task-definition.json
   
     - name: Fill in the new image ID in the ECS task definition
       id: task-def
